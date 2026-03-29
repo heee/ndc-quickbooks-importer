@@ -1,0 +1,5 @@
+# Exclude sample data files — these contain real donor information
+Sample*.csv
+Sample*.xlsx
+*.csv
+*.xlsx
