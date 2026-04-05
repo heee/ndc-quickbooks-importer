@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nature Discovery Center - Quickbooks Importer</title>
+    <title>Nature Discovery Center - NEON/GiveButter to QuickBooks Converter</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
     <style>
@@ -18,7 +18,6 @@
             --green-pale:   #e6f4d4;
             --green-faint:  #f4faed;
             --amber:        #e8940a;
-            --amber-light:  #fef3c7;
             --white:        #ffffff;
             --off-white:    #f8faf5;
             --text-dark:    #1a2e10;
@@ -792,7 +791,6 @@ let pendingWorkbook     = null;   // held during sheet-selection modal
 let mappingTableBuilt   = false;  // lazy build flag for mapping table
 let detectedItemTypes   = new Set(); // feature 3: 'donation'|'event'|'membership'
 let pendingColMapData   = null;   // feature 5: raw rows awaiting column mapping
-let pendingColMapSource = null;   // 'neon' | 'givebutter'
 
 // ═══════════════════════════════════════════════════════════════════
 // STEP STATE HELPERS
@@ -875,12 +873,12 @@ function processNeonFromWorkbook(workbook, sheetNames) {
         setProgress(40);
 
         // Merge rows from all selected sheets
-        let rows = [];
+        const rows = [];
         for (const name of sheetNames) {
             const ws        = workbook.Sheets[name];
             const sheetRows = XLSX.utils.sheet_to_json(ws, { defval: '' });
             if (sheetNames.length > 1) logMsg(`  Sheet "${name}": ${sheetRows.length} row${sheetRows.length !== 1 ? 's' : ''}`);
-            rows = rows.concat(sheetRows);
+            rows.push(...sheetRows);
         }
         logMsg(`Total rows to convert: ${rows.length}`);
         if (rows.length === 0) { logMsg('No data rows found — is this the correct file?', 'err'); return; }
@@ -893,8 +891,7 @@ function processNeonFromWorkbook(workbook, sheetNames) {
         if (missing.length > 0) {
             logMsg(`${missing.length} required column(s) not found — awaiting column mapping…`, 'warn');
             setProgress(50);
-            pendingColMapData   = { rows, available, missing, required: REQUIRED_NEON, type: 'neon' };
-            pendingColMapSource = 'neon';
+            pendingColMapData = { rows, available, missing, type: 'neon' };
             buildColumnMappingUI(available, missing);
             return; // pause — resumes in applyColumnMapping()
         }
@@ -952,17 +949,17 @@ function continueNeonConversion(rows) {
 
     setProgress(100);
     logMsg(`Done — ${convertedData.length} transactions ready for review.`, 'ok');
-    showMapping(convertedData.length, 'NEON');
+    showMapping();
 }
 
 // ── Feature 3 helper ──────────────────────────────────────────────
 function detectItemType(desc) {
-    const d = String(desc).toLowerCase();
-    const first = d.split('|')[0].trim();
-    if (/donation/i.test(first))                                       detectedItemTypes.add('donation');
-    if (/registration|event|camp|workshop|class|program|training/i.test(first)) detectedItemTypes.add('event');
-    if (/membership|member|join fee|annual/i.test(first))             detectedItemTypes.add('membership');
-    if (!detectedItemTypes.has('donation') && !detectedItemTypes.has('event') && !detectedItemTypes.has('membership') && first) detectedItemTypes.add('other');
+    const first = String(desc).toLowerCase().split('|')[0].trim();
+    if (!first) return;
+    if (/donation/i.test(first))                                                  { detectedItemTypes.add('donation'); return; }
+    if (/registration|event|camp|workshop|class|program|training/i.test(first))   { detectedItemTypes.add('event');    return; }
+    if (/membership|member|join fee|annual/i.test(first))                          { detectedItemTypes.add('membership'); return; }
+    detectedItemTypes.add('other');
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1031,7 +1028,7 @@ function buildColumnMappingUI(available, missing) {
 
 function applyColumnMapping() {
     if (!pendingColMapData) return;
-    const { rows, required } = pendingColMapData;
+    const { rows } = pendingColMapData;
     const selects = document.querySelectorAll('#col-map-body select');
 
     selects.forEach(sel => {
@@ -1076,8 +1073,7 @@ function processGiveButter(file) {
                 if (missing.length > 0) {
                     logMsg(`${missing.length} required column(s) not found — awaiting column mapping…`, 'warn');
                     setProgress(35);
-                    pendingColMapData   = { rows, available, missing, required: REQUIRED_GB, type: 'givebutter' };
-                    pendingColMapSource = 'givebutter';
+                    pendingColMapData = { rows, available, missing, type: 'givebutter' };
                     buildColumnMappingUI(available, missing);
                     return;
                 }
@@ -1142,13 +1138,13 @@ function continueGiveButterConversion(rows) {
 
     setProgress(100);
     logMsg(`Done — ${convertedData.length} transactions ready for review.`, 'ok');
-    showMapping(convertedData.length, 'GiveButter');
+    showMapping();
 }
 
 // ═══════════════════════════════════════════════════════════════════
 // STEP 3 — TRANSACTION TYPE MAPPING
 // ═══════════════════════════════════════════════════════════════════
-function showMapping(count, sourceName) {
+function showMapping() {
     setStepState('panel-2', 'done');
     setStepState('panel-3', 'active');
     document.getElementById('mapping-pending').style.display = 'none';
@@ -1328,8 +1324,6 @@ function deleteProfileBtn() {
 }
 
 // ── Feature 4: Preflight validation ──────────────────────────────
-let preflightConfirmed = false;
-
 function runPreflight(data, config) {
     const issues = [];
 
@@ -1367,43 +1361,33 @@ function showPreflightModal(issues, hasErrors) {
 }
 
 function closePreflight() { document.getElementById('preflight-modal').style.display = 'none'; }
-function confirmDownload() { closePreflight(); doDownload(); }
+function confirmDownload() { closePreflight(); doDownload(readConfig()); }
+
+function readConfig() {
+    return {
+        bankAccount:      document.getElementById('acct-bank').value.trim()              || 'Undeposited Funds',
+        incomeDonation:   document.getElementById('acct-income-donation').value.trim()   || 'Donations',
+        incomeEvent:      document.getElementById('acct-income-event').value.trim()      || 'Program Revenue',
+        incomeMembership: document.getElementById('acct-income-membership').value.trim() || 'Membership Income',
+        incomeOther:      document.getElementById('acct-income-other').value.trim()      || 'General Income',
+        arAccount:        document.getElementById('acct-ar').value.trim()                || 'Accounts Receivable',
+        feeAccount:       document.getElementById('acct-fee').value.trim()               || 'Merchant Service Charges'
+    };
+}
 
 // ── Download ──────────────────────────────────────────────────────
 async function downloadFile() {
     if (!convertedData || !convertedData.length) return;
-
-    const config = {
-        bankAccount:      document.getElementById('acct-bank').value.trim()             || 'Undeposited Funds',
-        incomeDonation:   document.getElementById('acct-income-donation').value.trim()  || 'Donations',
-        incomeEvent:      document.getElementById('acct-income-event').value.trim()     || 'Program Revenue',
-        incomeMembership: document.getElementById('acct-income-membership').value.trim()|| 'Membership Income',
-        incomeOther:      document.getElementById('acct-income-other').value.trim()     || 'General Income',
-        arAccount:        document.getElementById('acct-ar').value.trim()               || 'Accounts Receivable',
-        feeAccount:       document.getElementById('acct-fee').value.trim()              || 'Merchant Service Charges'
-    };
-
-    if (!preflightConfirmed) {
-        const issues   = runPreflight(convertedData, config);
-        const hasErrors = issues.some(i => i.type === 'err');
-        if (issues.length > 0) { showPreflightModal(issues, hasErrors); return; }
+    const config = readConfig();
+    const issues = runPreflight(convertedData, config);
+    if (issues.length > 0) {
+        showPreflightModal(issues, issues.some(i => i.type === 'err'));
+        return;
     }
-    preflightConfirmed = false;
     doDownload(config);
 }
 
 async function doDownload(config) {
-    if (!config) {
-        config = {
-            bankAccount:      document.getElementById('acct-bank').value.trim()             || 'Undeposited Funds',
-            incomeDonation:   document.getElementById('acct-income-donation').value.trim()  || 'Donations',
-            incomeEvent:      document.getElementById('acct-income-event').value.trim()     || 'Program Revenue',
-            incomeMembership: document.getElementById('acct-income-membership').value.trim()|| 'Membership Income',
-            incomeOther:      document.getElementById('acct-income-other').value.trim()     || 'General Income',
-            arAccount:        document.getElementById('acct-ar').value.trim()               || 'Accounts Receivable',
-            feeAccount:       document.getElementById('acct-fee').value.trim()              || 'Merchant Service Charges'
-        };
-    }
     const iifText = generateIIF(convertedData, config);
     const blob    = new Blob([iifText], { type: 'text/plain;charset=utf-8' });
     const today   = new Date().toISOString().slice(0, 10);
@@ -1501,12 +1485,11 @@ function resolveIncomeAccount(description, config) {
 // RESET
 // ═══════════════════════════════════════════════════════════════════
 function reset() {
-    convertedData       = null;
-    activeSource        = null;
-    mappingTableBuilt   = false;
-    detectedItemTypes   = new Set();
-    pendingColMapData   = null;
-    preflightConfirmed  = false;
+    convertedData     = null;
+    activeSource      = null;
+    mappingTableBuilt = false;
+    detectedItemTypes = new Set();
+    pendingColMapData = null;
 
     setStepState('panel-1', 'active');
     setStepState('panel-2', 'pending');
@@ -1576,7 +1559,7 @@ function parseAmount(value) {
     if (typeof value === 'number') return value;
     const str   = String(value).trim();
     const isNeg = str.startsWith('(') && str.endsWith(')');
-    const num   = parseFloat(str.replace(/[$(),\s]/g, '').replace(/,/g, ''));
+    const num   = parseFloat(str.replace(/[$(),\s,]/g, ''));
     if (isNaN(num)) return 0;
     return isNeg ? -num : num;
 }
