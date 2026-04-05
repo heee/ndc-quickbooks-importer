@@ -10,15 +10,14 @@
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-            /* NDC brand palette — inspired by logo (forest green + golden amber + sky) */
-            --green-dark:   #2c4a1e;   /* deep forest */
-            --green-mid:    #3d6b2a;   /* mid forest */
-            --green-bright: #5a8f3c;   /* bright leaf */
-            --green-light:  #7ab648;   /* light leaf */
-            --green-accent: #a3cf72;   /* pale leaf */
+            --green-dark:   #2c4a1e;
+            --green-mid:    #3d6b2a;
+            --green-bright: #5a8f3c;
+            --green-light:  #7ab648;
+            --green-accent: #a3cf72;
             --green-pale:   #e6f4d4;
             --green-faint:  #f4faed;
-            --amber:        #e8940a;   /* golden sun accent */
+            --amber:        #e8940a;
             --amber-light:  #fef3c7;
             --white:        #ffffff;
             --off-white:    #f8faf5;
@@ -34,42 +33,204 @@
             --warn:         #a16207;
         }
 
-        body {
+        html, body {
+            height: 100%;
+            overflow: hidden;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-            background: var(--off-white);
             color: var(--text-dark);
-            min-height: 100vh;
+            background: var(--off-white);
+        }
+
+        /* ── Page wrapper ────────────────────────────────────────── */
+        .page-wrapper {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
 
         /* ── Header ──────────────────────────────────────────────── */
         header {
             background: var(--green-dark);
-            padding: 20px 32px;
+            padding: 14px 28px;
             display: flex;
             align-items: center;
             gap: 14px;
             box-shadow: 0 2px 10px rgba(0,0,0,.25);
+            flex-shrink: 0;
         }
-        .header-logo { height: 56px; width: auto; flex-shrink: 0; filter: drop-shadow(0 1px 3px rgba(0,0,0,.35)); }
-        .header-titles h1 { font-size: 1.2rem; font-weight: 700; letter-spacing: -.01em; color: #f0f7e6; line-height: 1.2; }
-        .header-titles h2 { font-size: .78rem; font-weight: 400; color: var(--amber); margin-top: 3px; opacity: .9; letter-spacing: .04em; text-transform: uppercase; }
+        .header-logo { height: 48px; width: auto; flex-shrink: 0; filter: drop-shadow(0 1px 3px rgba(0,0,0,.35)); }
+        .header-titles h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: -.01em; color: #f0f7e6; line-height: 1.2; }
+        .header-titles h2 { font-size: .75rem; font-weight: 400; color: var(--amber); margin-top: 3px; opacity: .9; letter-spacing: .04em; text-transform: uppercase; }
 
-        /* ── Layout ──────────────────────────────────────────────── */
-        main { max-width: 700px; margin: 36px auto 64px; padding: 0 18px; display: flex; flex-direction: column; gap: 0; }
+        /* ── App canvas: horizontal panel row ────────────────────── */
+        .app-canvas {
+            display: flex;
+            flex-direction: row;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
 
-        /* ── Step connectors ─────────────────────────────────────── */
-        .step-connector { width: 2px; height: 16px; margin: 0 auto; background: var(--border); transition: background .4s; flex-shrink: 0; }
-        .step-connector.lit { background: var(--green-light); }
+        /* ── Step panels ─────────────────────────────────────────── */
+        .step-panel {
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border);
+            overflow: hidden;
+            transition: width .35s cubic-bezier(.4,0,.2,1), flex .35s cubic-bezier(.4,0,.2,1), background .25s;
+        }
+        .step-panel:last-child { border-right: none; }
 
-        /* ── Card base ───────────────────────────────────────────── */
-        .card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 24px; box-shadow: var(--shadow-sm); transition: opacity .3s, filter .3s; }
-        .step-dimmed { opacity: .38; filter: grayscale(.25); pointer-events: none; user-select: none; }
+        /* State: active — takes all remaining space */
+        .step-panel.state-active {
+            flex: 1;
+            min-width: 0;
+            background: var(--white);
+        }
 
-        /* ── Card title + step circle ────────────────────────────── */
-        .card-title { display: flex; align-items: center; gap: 9px; margin-bottom: 14px; }
-        .step-circle { width: 22px; height: 22px; border-radius: 50%; background: var(--green-mid); color: white; font-size: .72rem; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background .3s, border .3s, color .3s; }
-        .step-dimmed .step-circle { background: transparent; border: 2px solid var(--border); color: var(--text-light); }
-        .step-label { font-size: .82rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--text-light); }
+        /* State: done — narrow collapsed strip */
+        .step-panel.state-done {
+            width: 54px;
+            flex: none;
+            background: var(--green-faint);
+        }
+
+        /* State: pending — wider indicator strip, no interaction */
+        .step-panel.state-pending {
+            width: 108px;
+            flex: none;
+            background: var(--off-white);
+            pointer-events: none;
+        }
+
+        /* ── Done strip ──────────────────────────────────────────── */
+        .step-panel .done-strip  { display: none; }
+        .step-panel .pending-strip { display: none; }
+
+        .step-panel.state-done .done-strip {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0 16px;
+            gap: 14px;
+            height: 100%;
+        }
+        .step-panel.state-done .pending-strip,
+        .step-panel.state-done .panel-body { display: none; }
+
+        .step-panel.state-pending .pending-strip {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0 16px;
+            gap: 12px;
+            height: 100%;
+        }
+        .step-panel.state-pending .done-strip,
+        .step-panel.state-pending .panel-body { display: none; }
+
+        .step-panel.state-active .done-strip,
+        .step-panel.state-active .pending-strip { display: none; }
+
+        /* Panel body (active state only) */
+        .panel-body {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        /* Done badge: green circle with checkmark */
+        .done-badge {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--green-bright);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .done-strip-label {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            font-size: .69rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: var(--text-light);
+            white-space: nowrap;
+        }
+
+        /* Pending num: outlined circle with step number */
+        .pending-num {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .72rem;
+            font-weight: 700;
+            color: var(--text-light);
+            flex-shrink: 0;
+        }
+
+        .pending-strip-label {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            font-size: .69rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            color: var(--text-light);
+            opacity: .65;
+            white-space: nowrap;
+        }
+
+        /* Panel header (fixed top of active panel) */
+        .panel-hd {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 14px 20px 12px;
+            background: var(--white);
+            border-bottom: 1px solid var(--border-light);
+            flex-shrink: 0;
+        }
+
+        .step-chip {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--green-mid);
+            color: white;
+            font-size: .72rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .panel-name {
+            font-size: .82rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            color: var(--text-light);
+        }
+
+        /* Panel scrollable body */
+        .panel-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 22px 24px 32px;
+            min-height: 0;
+        }
 
         /* ── Import buttons ──────────────────────────────────────── */
         .import-desc { font-size: .875rem; color: var(--text-mid); line-height: 1.55; margin-bottom: 18px; }
@@ -106,7 +267,7 @@
         .progress-fill { height: 100%; background: linear-gradient(90deg, var(--green-mid) 0%, var(--green-accent) 100%); border-radius: 99px; width: 0%; transition: width .45s cubic-bezier(.4,0,.2,1); }
         .progress-pct { font-size: .74rem; color: var(--text-light); text-align: right; }
 
-        /* ── Column-mapping inline (feature 5) ───────────────────── */
+        /* ── Column-mapping inline ───────────────────────────────── */
         .col-map-section { margin-top: 14px; border: 1.5px solid #f59e0b; border-radius: 8px; overflow: hidden; }
         .col-map-header  { background: #fffbeb; padding: 10px 14px; font-size: .82rem; font-weight: 700; color: #92400e; border-bottom: 1px solid #fde68a; }
         .col-map-body    { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
@@ -128,7 +289,6 @@
         .choice-hint  { font-size: .79rem; color: var(--text-mid); line-height: 1.4; display: block; }
         .defaults-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px; }
         .pill { font-size: .73rem; padding: 2px 9px; border-radius: 20px; background: var(--green-pale); color: var(--green-mid); font-weight: 600; }
-        /* Mapping table */
         .mt-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: .78rem; color: var(--text-light); }
         .mt-scroll { border: 1px solid var(--border); border-radius: 7px; overflow: auto; max-height: 340px; }
         .mt { width: 100%; border-collapse: collapse; font-size: .8rem; }
@@ -155,8 +315,11 @@
         .export-ready > p { font-size: .875rem; color: var(--text-mid); margin-bottom: 20px; line-height: 1.5; }
         .export-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 0; }
 
+        /* Export two-column grid */
+        .export-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; width: 100%; margin-bottom: 16px; }
+
         /* Profiles */
-        .profiles-section { background: var(--green-faint); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin-bottom: 14px; text-align: left; width: 100%; }
+        .profiles-section { background: var(--green-faint); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; text-align: left; width: 100%; }
         .section-heading { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-light); margin-bottom: 10px; display: flex; align-items: center; gap: 7px; }
         .profiles-row { display: flex; gap: 6px; margin-bottom: 8px; }
         .profiles-row select { flex: 1; padding: 6px 8px; border: 1.5px solid var(--border); border-radius: 6px; font-family: inherit; font-size: .82rem; color: var(--text-dark); background: var(--white); outline: none; }
@@ -166,7 +329,7 @@
         .profiles-save-row input:focus { border-color: var(--green-light); }
 
         /* Account config */
-        .acct-config { background: var(--green-faint); border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; margin-bottom: 14px; text-align: left; width: 100%; }
+        .acct-config { background: var(--green-faint); border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; text-align: left; width: 100%; }
         .acct-config-note { font-size: .78rem; color: var(--text-light); margin-bottom: 12px; line-height: 1.5; }
         .acct-fields { display: flex; flex-direction: column; gap: 9px; }
         .acct-field label { display: block; font-size: .76rem; font-weight: 600; color: var(--text-mid); margin-bottom: 3px; letter-spacing: .01em; }
@@ -176,7 +339,7 @@
         .acct-sub-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-light); padding: 4px 0 2px; }
 
         /* Import guide */
-        .import-guide { background: #fffdf0; border: 1px solid #e9d97a; border-radius: 8px; padding: 14px 16px; margin-top: 16px; text-align: left; width: 100%; }
+        .import-guide { background: #fffdf0; border: 1px solid #e9d97a; border-radius: 8px; padding: 14px 16px; text-align: left; width: 100%; }
         .import-guide-heading { display: flex; align-items: center; gap: 7px; font-size: .79rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #7a6a00; margin-bottom: 10px; }
         .import-guide ol { padding-left: 18px; margin: 0; list-style: decimal; }
         .import-guide li { font-size: .81rem; color: #5a5200; line-height: 1.6; margin-bottom: 3px; }
@@ -203,7 +366,7 @@
         .modal-body { padding: 16px 20px; }
         .modal-body > p { font-size: .84rem; color: var(--text-mid); margin-bottom: 12px; }
         .modal-footer { border-top: 1px solid var(--border-light); padding: 14px 20px; display: flex; gap: 8px; justify-content: flex-end; }
-        /* Sheet list (in sheet modal) */
+        /* Sheet list */
         .sheet-list { display: flex; flex-direction: column; gap: 6px; max-height: 240px; overflow-y: auto; }
         .sheet-option { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 7px; cursor: pointer; transition: border-color .15s, background .15s; font-size: .86rem; color: var(--text-dark); }
         .sheet-option:hover { border-color: var(--green-light); background: var(--green-faint); }
@@ -219,261 +382,359 @@
         .preflight-modal-footer-note { font-size: .76rem; color: var(--text-light); margin-top: 10px; }
 
         /* ── Responsive ──────────────────────────────────────────── */
+        @media (max-width: 768px) {
+            html, body { overflow: auto; }
+            .app-canvas { flex-direction: column; overflow: auto; height: auto; }
+            .step-panel { width: 100% !important; flex: none !important; border-right: none; border-bottom: 1px solid var(--border); }
+            .done-strip, .pending-strip { flex-direction: row !important; padding: 12px 16px !important; height: auto !important; gap: 10px !important; }
+            .done-strip-label, .pending-strip-label { writing-mode: initial !important; transform: none !important; }
+            .panel-scroll { overflow: visible; }
+        }
         @media (max-width: 480px) {
             .import-grid { grid-template-columns: 1fr; }
-            header { padding: 14px 18px; }
-            main   { margin: 20px auto 48px; }
+            header { padding: 12px 16px; }
             .col-map-row { grid-template-columns: 1fr; }
             .col-map-arrow { display: none; }
+            .export-cols { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
 
-<header>
-    <img class="header-logo" src="https://naturediscoverycenter.org/wp-content/uploads/2017/02/logo-large-transp.png" alt="Nature Discovery Center logo">
-    <div class="header-titles">
-        <h1>Nature Discovery Center</h1>
-        <h2>Quickbooks Importer</h2>
-    </div>
-</header>
+<div class="page-wrapper">
 
-<main>
-
-    <!-- ── Step 1: Select Source File ── -->
-    <div class="card" id="import-card">
-        <div class="card-title">
-            <div class="step-circle">1</div>
-            <span class="step-label">Select Source File</span>
+    <header>
+        <svg class="header-logo" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg" aria-label="Nature Discovery Center logo">
+            <!-- 2x2 colored grid of rounded squares -->
+            <rect x="1" y="1" width="20" height="20" rx="3.5" fill="#3d8c40"/>
+            <rect x="23" y="1" width="20" height="20" rx="3.5" fill="#d4b800"/>
+            <rect x="1" y="23" width="20" height="20" rx="3.5" fill="#2b7abf"/>
+            <rect x="23" y="23" width="20" height="20" rx="3.5" fill="#d45a1a"/>
+            <!-- Leaf (top-left green) -->
+            <path d="M11 17 C8 14 7.5 9.5 11 8 C14.5 6.5 16 10 14.5 13.5 C13.5 15.5 11 17 11 17Z" fill="white" opacity="0.92"/>
+            <line x1="11" y1="17" x2="11" y2="9" stroke="#3d8c40" stroke-width="1" opacity="0.4"/>
+            <!-- Sun with rays (top-right amber) -->
+            <circle cx="33" cy="11" r="3.8" fill="white" opacity="0.92"/>
+            <line x1="33" y1="4.5" x2="33" y2="3" stroke="white" stroke-width="1.3" stroke-linecap="round" opacity="0.85"/>
+            <line x1="33" y1="17.5" x2="33" y2="19" stroke="white" stroke-width="1.3" stroke-linecap="round" opacity="0.85"/>
+            <line x1="25.5" y1="11" x2="24" y2="11" stroke="white" stroke-width="1.3" stroke-linecap="round" opacity="0.85"/>
+            <line x1="40.5" y1="11" x2="42" y2="11" stroke="white" stroke-width="1.3" stroke-linecap="round" opacity="0.85"/>
+            <line x1="28.1" y1="6.1" x2="27" y2="5" stroke="white" stroke-width="1.3" stroke-linecap="round" opacity="0.85"/>
+            <line x1="37.9" y1="6.1" x2="39" y2="5" stroke="white" stroke-width="1.3" stroke-linecap="round" opacity="0.85"/>
+            <line x1="28.1" y1="15.9" x2="27" y2="17" stroke="white" stroke-width="1.3" stroke-linecap="round" opacity="0.85"/>
+            <line x1="37.9" y1="15.9" x2="39" y2="17" stroke="white" stroke-width="1.3" stroke-linecap="round" opacity="0.85"/>
+            <!-- Bird silhouette (bottom-left blue) -->
+            <path d="M5 35 Q8 29 11 31 Q14 29 17 35" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.9"/>
+            <!-- Magnifier + bug (bottom-right orange) -->
+            <circle cx="31.5" cy="31" r="4.5" stroke="white" stroke-width="1.6" fill="none" opacity="0.9"/>
+            <line x1="34.7" y1="34.7" x2="37.5" y2="37.5" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.9"/>
+            <ellipse cx="31.5" cy="31" rx="1.8" ry="2.5" fill="white" opacity="0.75"/>
+            <line x1="29.7" y1="29.8" x2="28" y2="28.5" stroke="white" stroke-width="0.9" stroke-linecap="round" opacity="0.7"/>
+            <line x1="29.7" y1="32" x2="27.8" y2="32" stroke="white" stroke-width="0.9" stroke-linecap="round" opacity="0.7"/>
+            <line x1="33.3" y1="29.8" x2="35" y2="28.5" stroke="white" stroke-width="0.9" stroke-linecap="round" opacity="0.7"/>
+            <line x1="33.3" y1="32" x2="35.2" y2="32" stroke="white" stroke-width="0.9" stroke-linecap="round" opacity="0.7"/>
+        </svg>
+        <div class="header-titles">
+            <h1>Nature Discovery Center</h1>
+            <h2>NEON/GiveButter to QuickBooks Converter</h2>
         </div>
-        <p class="import-desc">Choose the type of export file you want to convert. The importer will transform it into a QuickBooks-ready <code>.iif</code> file.</p>
-        <div class="import-grid">
-            <button class="btn-source neon" onclick="triggerUpload('neon')">
-                <div class="src-icon">📊</div>
-                <div><span class="src-label">NEON Export</span><span class="src-hint">Excel file (.xlsx)</span></div>
-            </button>
-            <button class="btn-source givebutter" onclick="triggerUpload('givebutter')">
-                <div class="src-icon">🎁</div>
-                <div><span class="src-label">GiveButter Export</span><span class="src-hint">CSV file (.csv)</span></div>
-            </button>
-        </div>
-        <input type="file" id="neon-file-input"       accept=".xlsx,.xls" style="display:none" onchange="handleFile(this,'neon')">
-        <input type="file" id="givebutter-file-input" accept=".csv"       style="display:none" onchange="handleFile(this,'givebutter')">
-    </div>
+    </header>
 
-    <div class="step-connector" id="connector-1"></div>
+    <div class="app-canvas">
 
-    <!-- ── Step 2: Processing ── -->
-    <div class="card step-dimmed" id="progress-card">
-        <div class="progress-header">
-            <div class="card-title" style="margin-bottom:0">
-                <div class="step-circle">2</div>
-                <span class="step-label">Processing</span>
+        <!-- ── Panel 1: Select Source File ── -->
+        <div class="step-panel state-active" id="panel-1">
+            <div class="done-strip">
+                <div class="done-badge">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                        <path d="M2.5 7.5 L5.5 10.5 L11.5 4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <span class="done-strip-label">Select File</span>
             </div>
-            <span class="badge neutral" id="source-badge">—</span>
-        </div>
-        <div class="log-box" id="log-box" role="log" aria-live="polite">
-            <div class="log-line" style="color:var(--text-light);font-style:italic">Waiting for a source file…</div>
-        </div>
-        <!-- Column mapping UI (feature 5 — shown when columns are missing) -->
-        <div class="col-map-section" id="col-map-section" style="display:none">
-            <div class="col-map-header">⚠ Some required columns were not detected — map them below</div>
-            <div class="col-map-body" id="col-map-body"></div>
-            <div class="col-map-footer">
-                <button class="btn-sm" onclick="applyColumnMapping()">Apply Mapping &amp; Continue</button>
+            <div class="pending-strip">
+                <div class="pending-num">1</div>
+                <span class="pending-strip-label">Select File</span>
+            </div>
+            <div class="panel-body">
+                <div class="panel-hd">
+                    <div class="step-chip">1</div>
+                    <span class="panel-name">Select Source File</span>
+                </div>
+                <div class="panel-scroll">
+                    <p class="import-desc">Choose the type of export file you want to convert. The importer will transform it into a QuickBooks-ready <code>.iif</code> file.</p>
+                    <div class="import-grid">
+                        <button class="btn-source neon" onclick="triggerUpload('neon')">
+                            <div class="src-icon">📊</div>
+                            <div><span class="src-label">NEON Export</span><span class="src-hint">Excel file (.xlsx)</span></div>
+                        </button>
+                        <button class="btn-source givebutter" onclick="triggerUpload('givebutter')">
+                            <div class="src-icon">🎁</div>
+                            <div><span class="src-label">GiveButter Export</span><span class="src-hint">CSV file (.csv)</span></div>
+                        </button>
+                    </div>
+                    <input type="file" id="neon-file-input"       accept=".xlsx,.xls" style="display:none" onchange="handleFile(this,'neon')">
+                    <input type="file" id="givebutter-file-input" accept=".csv"       style="display:none" onchange="handleFile(this,'givebutter')">
+                </div>
             </div>
         </div>
-        <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
-        <div class="progress-pct" id="progress-pct">0%</div>
-    </div>
 
-    <div class="step-connector" id="connector-2"></div>
-
-    <!-- ── Step 3: Transaction Type Mapping ── -->
-    <div class="card step-dimmed" id="mapping-card">
-        <div class="card-title">
-            <div class="step-circle">3</div>
-            <span class="step-label">Transaction Type Mapping</span>
-        </div>
-
-        <!-- Placeholder while dimmed -->
-        <div id="mapping-pending">
-            <p class="step-placeholder">Complete processing to configure transaction types.</p>
-        </div>
-
-        <!-- Active content -->
-        <div id="mapping-ready" style="display:none">
-            <div class="choice-area">
-                <label class="choice-card">
-                    <input type="radio" name="mapping-mode" value="defaults" checked onchange="onMappingModeChange('defaults')">
-                    <div>
-                        <span class="choice-title">Use default settings</span>
-                        <div class="defaults-pills">
-                            <span class="pill">Charges / Donations → Sales Receipt</span>
-                            <span class="pill">Pledges → Invoice</span>
-                            <span class="pill">Amount Withheld → General Journal</span>
+        <!-- ── Panel 2: Processing ── -->
+        <div class="step-panel state-pending" id="panel-2">
+            <div class="done-strip">
+                <div class="done-badge">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                        <path d="M2.5 7.5 L5.5 10.5 L11.5 4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <span class="done-strip-label">Processing</span>
+            </div>
+            <div class="pending-strip">
+                <div class="pending-num">2</div>
+                <span class="pending-strip-label">Processing</span>
+            </div>
+            <div class="panel-body">
+                <div class="panel-hd">
+                    <div class="step-chip">2</div>
+                    <span class="panel-name">Processing</span>
+                    <span class="badge neutral" id="source-badge" style="margin-left:auto">—</span>
+                </div>
+                <div class="panel-scroll">
+                    <div class="log-box" id="log-box" role="log" aria-live="polite">
+                        <div class="log-line" style="color:var(--text-light);font-style:italic">Waiting for a source file…</div>
+                    </div>
+                    <!-- Column mapping UI (shown when columns are missing) -->
+                    <div class="col-map-section" id="col-map-section" style="display:none">
+                        <div class="col-map-header">⚠ Some required columns were not detected — map them below</div>
+                        <div class="col-map-body" id="col-map-body"></div>
+                        <div class="col-map-footer">
+                            <button class="btn-sm" onclick="applyColumnMapping()">Apply Mapping &amp; Continue</button>
                         </div>
                     </div>
-                </label>
-                <label class="choice-card">
-                    <input type="radio" name="mapping-mode" value="custom" onchange="onMappingModeChange('custom')">
-                    <div>
-                        <span class="choice-title">Customize per row</span>
-                        <span class="choice-hint">Review and override the proposed QuickBooks transaction type for each transaction</span>
-                    </div>
-                </label>
-            </div>
-
-            <!-- Table: lazy-built, shown when custom is selected -->
-            <div id="mapping-table-wrap" style="display:none">
-                <div class="mt-toolbar">
-                    <span id="mt-count"></span>
-                    <span style="font-size:.75rem;color:var(--text-light)">Scroll to review all rows</span>
-                </div>
-                <div class="mt-scroll">
-                    <table class="mt">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Name</th>
-                                <th class="ta-r">Amount</th>
-                                <th>Description</th>
-                                <th>QB Transaction Type</th>
-                            </tr>
-                        </thead>
-                        <tbody id="mt-body"></tbody>
-                    </table>
+                    <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+                    <div class="progress-pct" id="progress-pct">0%</div>
                 </div>
             </div>
+        </div>
 
-            <div class="mapping-footer">
-                <button class="btn-primary" onclick="applyMapping()">
-                    Continue
+        <!-- ── Panel 3: Transaction Type Mapping ── -->
+        <div class="step-panel state-pending" id="panel-3">
+            <div class="done-strip">
+                <div class="done-badge">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                        <path d="M3 7h8M8 4l3 3-3 3" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M2.5 7.5 L5.5 10.5 L11.5 4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
-                </button>
+                </div>
+                <span class="done-strip-label">Tx Mapping</span>
+            </div>
+            <div class="pending-strip">
+                <div class="pending-num">3</div>
+                <span class="pending-strip-label">Tx Mapping</span>
+            </div>
+            <div class="panel-body">
+                <div class="panel-hd">
+                    <div class="step-chip">3</div>
+                    <span class="panel-name">Transaction Type Mapping</span>
+                </div>
+                <div class="panel-scroll">
+                    <!-- Placeholder while pending -->
+                    <div id="mapping-pending">
+                        <p class="step-placeholder">Complete processing to configure transaction types.</p>
+                    </div>
+
+                    <!-- Active content -->
+                    <div id="mapping-ready" style="display:none">
+                        <div class="choice-area">
+                            <label class="choice-card">
+                                <input type="radio" name="mapping-mode" value="defaults" checked onchange="onMappingModeChange('defaults')">
+                                <div>
+                                    <span class="choice-title">Use default settings</span>
+                                    <div class="defaults-pills">
+                                        <span class="pill">Charges / Donations → Sales Receipt</span>
+                                        <span class="pill">Pledges → Invoice</span>
+                                        <span class="pill">Amount Withheld → General Journal</span>
+                                    </div>
+                                </div>
+                            </label>
+                            <label class="choice-card">
+                                <input type="radio" name="mapping-mode" value="custom" onchange="onMappingModeChange('custom')">
+                                <div>
+                                    <span class="choice-title">Customize per row</span>
+                                    <span class="choice-hint">Review and override the proposed QuickBooks transaction type for each transaction</span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- Table: lazy-built, shown when custom is selected -->
+                        <div id="mapping-table-wrap" style="display:none">
+                            <div class="mt-toolbar">
+                                <span id="mt-count"></span>
+                                <span style="font-size:.75rem;color:var(--text-light)">Scroll to review all rows</span>
+                            </div>
+                            <div class="mt-scroll">
+                                <table class="mt">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Name</th>
+                                            <th class="ta-r">Amount</th>
+                                            <th>Description</th>
+                                            <th>QB Transaction Type</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="mt-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="mapping-footer">
+                            <button class="btn-primary" onclick="applyMapping()">
+                                Continue
+                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                                    <path d="M3 7h8M8 4l3 3-3 3" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="step-connector" id="connector-3"></div>
+        <!-- ── Panel 4: Export ── -->
+        <div class="step-panel state-pending" id="panel-4">
+            <div class="done-strip">
+                <div class="done-badge">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                        <path d="M2.5 7.5 L5.5 10.5 L11.5 4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <span class="done-strip-label">Export</span>
+            </div>
+            <div class="pending-strip">
+                <div class="pending-num">4</div>
+                <span class="pending-strip-label">Export</span>
+            </div>
+            <div class="panel-body">
+                <div class="panel-hd">
+                    <div class="step-chip">4</div>
+                    <span class="panel-name">Export</span>
+                </div>
+                <div class="panel-scroll">
 
-    <!-- ── Step 4: Export ── -->
-    <div class="card step-dimmed" id="export-card">
-        <div class="card-title">
-            <div class="step-circle">4</div>
-            <span class="step-label">Export</span>
+                    <div class="export-pending" id="export-pending">
+                        <svg width="36" height="36" viewBox="0 0 36 36" fill="none" aria-hidden="true">
+                            <rect x="6" y="4" width="24" height="28" rx="3" stroke="#b7e4c7" stroke-width="2"/>
+                            <line x1="11" y1="12" x2="25" y2="12" stroke="#b7e4c7" stroke-width="2" stroke-linecap="round"/>
+                            <line x1="11" y1="18" x2="25" y2="18" stroke="#b7e4c7" stroke-width="2" stroke-linecap="round"/>
+                            <line x1="11" y1="24" x2="19" y2="24" stroke="#b7e4c7" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        <p>Complete processing to generate your export file.</p>
+                    </div>
+
+                    <div class="export-ready" id="export-ready">
+                        <div class="check-ring">
+                            <svg viewBox="0 0 28 28" fill="none" aria-hidden="true">
+                                <circle cx="14" cy="14" r="13" fill="#52b788"/>
+                                <path d="M8 14.5 L12.5 19 L20 10" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <h3>Conversion Complete</h3>
+                        <p id="export-summary">Your transactions are ready to export.</p>
+
+                        <!-- Two-column grid: profiles left, account config right -->
+                        <div class="export-cols">
+                            <!-- Profiles (feature 1) -->
+                            <div class="profiles-section">
+                                <div class="section-heading">
+                                    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true"><rect x="1" y="1" width="11" height="11" rx="2" stroke="#7a9e8e" stroke-width="1.4"/><line x1="4" y1="4" x2="9" y2="4" stroke="#7a9e8e" stroke-width="1.2" stroke-linecap="round"/><line x1="4" y1="6.5" x2="9" y2="6.5" stroke="#7a9e8e" stroke-width="1.2" stroke-linecap="round"/><line x1="4" y1="9" x2="7" y2="9" stroke="#7a9e8e" stroke-width="1.2" stroke-linecap="round"/></svg>
+                                    Saved Profiles
+                                </div>
+                                <div class="profiles-row">
+                                    <select id="profile-select"><option value="">— no saved profiles —</option></select>
+                                    <button class="btn-sm" onclick="loadProfileBtn()">Load</button>
+                                    <button class="btn-sm danger" onclick="deleteProfileBtn()">Delete</button>
+                                </div>
+                                <div class="profiles-save-row">
+                                    <input type="text" id="profile-name-input" placeholder="Save current settings as…">
+                                    <button class="btn-sm" onclick="saveProfileBtn()">Save Profile</button>
+                                </div>
+                            </div>
+
+                            <!-- Account config (feature 3: per-type accounts) -->
+                            <div class="acct-config">
+                                <div class="section-heading" style="margin-bottom:6px">
+                                    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true"><circle cx="6.5" cy="6.5" r="5.5" stroke="#7a9e8e" stroke-width="1.4"/><path d="M4.5 6.5a2 2 0 1 0 4 0 2 2 0 0 0-4 0" stroke="#7a9e8e" stroke-width="1.3"/></svg>
+                                    QuickBooks Account Names
+                                </div>
+                                <p class="acct-config-note">Enter names <strong>exactly</strong> as they appear in your Chart of Accounts (case-sensitive).</p>
+                                <div class="acct-fields">
+                                    <div class="acct-field">
+                                        <label for="acct-bank">Bank / Deposit Account</label>
+                                        <input type="text" id="acct-bank" value="Undeposited Funds" placeholder="e.g. Undeposited Funds">
+                                    </div>
+                                    <div class="acct-sub-label" id="acct-income-label">Income Accounts</div>
+                                    <div class="acct-field" id="acct-income-donation-row">
+                                        <label for="acct-income-donation">Donation Income</label>
+                                        <input type="text" id="acct-income-donation" value="Donations" placeholder="e.g. Donations">
+                                    </div>
+                                    <div class="acct-field" id="acct-income-event-row" style="display:none">
+                                        <label for="acct-income-event">Event / Program Income</label>
+                                        <input type="text" id="acct-income-event" value="Program Revenue" placeholder="e.g. Program Revenue">
+                                    </div>
+                                    <div class="acct-field" id="acct-income-membership-row" style="display:none">
+                                        <label for="acct-income-membership">Membership Income</label>
+                                        <input type="text" id="acct-income-membership" value="Membership Income" placeholder="e.g. Membership Income">
+                                    </div>
+                                    <div class="acct-field" id="acct-income-other-row" style="display:none">
+                                        <label for="acct-income-other">Other / Default Income</label>
+                                        <input type="text" id="acct-income-other" value="General Income" placeholder="e.g. General Income">
+                                    </div>
+                                    <div class="acct-divider"></div>
+                                    <div class="acct-field" id="acct-ar-row" style="display:none">
+                                        <label for="acct-ar">Accounts Receivable <span style="font-weight:400;color:var(--text-light)">(for Invoice rows)</span></label>
+                                        <input type="text" id="acct-ar" value="Accounts Receivable" placeholder="e.g. Accounts Receivable">
+                                    </div>
+                                    <div class="acct-field" id="acct-fee-row" style="display:none">
+                                        <label for="acct-fee">Processing Fees Account <span style="font-weight:400;color:var(--text-light)">(for withheld fees)</span></label>
+                                        <input type="text" id="acct-fee" value="Merchant Service Charges" placeholder="e.g. Merchant Service Charges">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Import guide full-width below -->
+                        <div class="export-actions" style="margin-bottom:16px">
+                            <button class="btn-primary" onclick="downloadFile()">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1v9M4 7l4 4 4-4M2 12v2h12v-2" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                Create QuickBooks Import File (.iif)
+                            </button>
+                            <button class="btn-ghost" onclick="reset()">
+                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7a5 5 0 1 0 1-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M2 2v3h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                Import Another File
+                            </button>
+                        </div>
+
+                        <div class="import-guide">
+                            <div class="import-guide-heading">
+                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="6" stroke="#7a6a00" stroke-width="1.5"/><line x1="7" y1="6" x2="7" y2="10" stroke="#7a6a00" stroke-width="1.5" stroke-linecap="round"/><circle cx="7" cy="4" r=".7" fill="#7a6a00"/></svg>
+                                How to import into QuickBooks Desktop 2017
+                            </div>
+                            <ol>
+                                <li><strong>Back up your company file first</strong> — File → Back Up Company → Create Local Backup</li>
+                                <li>Go to <strong>File → Utilities → Import → IIF Files</strong></li>
+                                <li>Browse to the downloaded <code>.iif</code> file and click <strong>Open</strong></li>
+                                <li>QuickBooks will confirm: <em>"Your data has been imported"</em> — click OK</li>
+                                <li>Review the imported transactions in the relevant account register to verify</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
         </div>
 
-        <div class="export-pending" id="export-pending">
-            <svg width="36" height="36" viewBox="0 0 36 36" fill="none" aria-hidden="true">
-                <rect x="6" y="4" width="24" height="28" rx="3" stroke="#b7e4c7" stroke-width="2"/>
-                <line x1="11" y1="12" x2="25" y2="12" stroke="#b7e4c7" stroke-width="2" stroke-linecap="round"/>
-                <line x1="11" y1="18" x2="25" y2="18" stroke="#b7e4c7" stroke-width="2" stroke-linecap="round"/>
-                <line x1="11" y1="24" x2="19" y2="24" stroke="#b7e4c7" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-            <p>Complete processing to generate your export file.</p>
-        </div>
+    </div><!-- /.app-canvas -->
 
-        <div class="export-ready" id="export-ready">
-            <div class="check-ring">
-                <svg viewBox="0 0 28 28" fill="none" aria-hidden="true">
-                    <circle cx="14" cy="14" r="13" fill="#52b788"/>
-                    <path d="M8 14.5 L12.5 19 L20 10" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </div>
-            <h3>Conversion Complete</h3>
-            <p id="export-summary">Your transactions are ready to export.</p>
-
-            <!-- Profiles (feature 1) -->
-            <div class="profiles-section">
-                <div class="section-heading">
-                    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true"><rect x="1" y="1" width="11" height="11" rx="2" stroke="#7a9e8e" stroke-width="1.4"/><line x1="4" y1="4" x2="9" y2="4" stroke="#7a9e8e" stroke-width="1.2" stroke-linecap="round"/><line x1="4" y1="6.5" x2="9" y2="6.5" stroke="#7a9e8e" stroke-width="1.2" stroke-linecap="round"/><line x1="4" y1="9" x2="7" y2="9" stroke="#7a9e8e" stroke-width="1.2" stroke-linecap="round"/></svg>
-                    Saved Profiles
-                </div>
-                <div class="profiles-row">
-                    <select id="profile-select"><option value="">— no saved profiles —</option></select>
-                    <button class="btn-sm" onclick="loadProfileBtn()">Load</button>
-                    <button class="btn-sm danger" onclick="deleteProfileBtn()">Delete</button>
-                </div>
-                <div class="profiles-save-row">
-                    <input type="text" id="profile-name-input" placeholder="Save current settings as…">
-                    <button class="btn-sm" onclick="saveProfileBtn()">Save Profile</button>
-                </div>
-            </div>
-
-            <!-- Account config (feature 3: per-type accounts) -->
-            <div class="acct-config">
-                <div class="section-heading" style="margin-bottom:6px">
-                    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true"><circle cx="6.5" cy="6.5" r="5.5" stroke="#7a9e8e" stroke-width="1.4"/><path d="M4.5 6.5a2 2 0 1 0 4 0 2 2 0 0 0-4 0" stroke="#7a9e8e" stroke-width="1.3"/></svg>
-                    QuickBooks Account Names
-                </div>
-                <p class="acct-config-note">Enter names <strong>exactly</strong> as they appear in your Chart of Accounts (case-sensitive).</p>
-                <div class="acct-fields">
-                    <div class="acct-field">
-                        <label for="acct-bank">Bank / Deposit Account</label>
-                        <input type="text" id="acct-bank" value="Undeposited Funds" placeholder="e.g. Undeposited Funds">
-                    </div>
-                    <!-- Per-type income accounts (feature 3) -->
-                    <div class="acct-sub-label" id="acct-income-label">Income Accounts</div>
-                    <div class="acct-field" id="acct-income-donation-row">
-                        <label for="acct-income-donation">Donation Income</label>
-                        <input type="text" id="acct-income-donation" value="Donations" placeholder="e.g. Donations">
-                    </div>
-                    <div class="acct-field" id="acct-income-event-row" style="display:none">
-                        <label for="acct-income-event">Event / Program Income</label>
-                        <input type="text" id="acct-income-event" value="Program Revenue" placeholder="e.g. Program Revenue">
-                    </div>
-                    <div class="acct-field" id="acct-income-membership-row" style="display:none">
-                        <label for="acct-income-membership">Membership Income</label>
-                        <input type="text" id="acct-income-membership" value="Membership Income" placeholder="e.g. Membership Income">
-                    </div>
-                    <div class="acct-field" id="acct-income-other-row" style="display:none">
-                        <label for="acct-income-other">Other / Default Income</label>
-                        <input type="text" id="acct-income-other" value="General Income" placeholder="e.g. General Income">
-                    </div>
-                    <!-- Conditional accounts -->
-                    <div class="acct-divider"></div>
-                    <div class="acct-field" id="acct-ar-row" style="display:none">
-                        <label for="acct-ar">Accounts Receivable <span style="font-weight:400;color:var(--text-light)">(for Invoice rows)</span></label>
-                        <input type="text" id="acct-ar" value="Accounts Receivable" placeholder="e.g. Accounts Receivable">
-                    </div>
-                    <div class="acct-field" id="acct-fee-row" style="display:none">
-                        <label for="acct-fee">Processing Fees Account <span style="font-weight:400;color:var(--text-light)">(for withheld fees)</span></label>
-                        <input type="text" id="acct-fee" value="Merchant Service Charges" placeholder="e.g. Merchant Service Charges">
-                    </div>
-                </div>
-            </div>
-
-            <div class="export-actions">
-                <button class="btn-primary" onclick="downloadFile()">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1v9M4 7l4 4 4-4M2 12v2h12v-2" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    Create QuickBooks Import File (.iif)
-                </button>
-                <button class="btn-ghost" onclick="reset()">
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M2 7a5 5 0 1 0 1-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M2 2v3h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    Import Another File
-                </button>
-            </div>
-
-            <div class="import-guide">
-                <div class="import-guide-heading">
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="6" stroke="#7a6a00" stroke-width="1.5"/><line x1="7" y1="6" x2="7" y2="10" stroke="#7a6a00" stroke-width="1.5" stroke-linecap="round"/><circle cx="7" cy="4" r=".7" fill="#7a6a00"/></svg>
-                    How to import into QuickBooks Desktop 2017
-                </div>
-                <ol>
-                    <li><strong>Back up your company file first</strong> — File → Back Up Company → Create Local Backup</li>
-                    <li>Go to <strong>File → Utilities → Import → IIF Files</strong></li>
-                    <li>Browse to the downloaded <code>.iif</code> file and click <strong>Open</strong></li>
-                    <li>QuickBooks will confirm: <em>"Your data has been imported"</em> — click OK</li>
-                    <li>Review the imported transactions in the relevant account register to verify</li>
-                </ol>
-            </div>
-        </div>
-    </div>
-
-</main>
+</div><!-- /.page-wrapper -->
 
 <!-- ── Sheet-selection modal ── -->
 <div class="modal-overlay" id="sheet-modal" style="display:none" role="dialog" aria-modal="true" aria-labelledby="sheet-modal-title">
@@ -498,7 +759,7 @@
     </div>
 </div>
 
-<!-- ── Preflight validation modal (feature 4) ── -->
+<!-- ── Preflight validation modal ── -->
 <div class="modal-overlay" id="preflight-modal" style="display:none" role="dialog" aria-modal="true">
     <div class="modal">
         <div class="modal-header">
@@ -534,6 +795,15 @@ let pendingColMapData   = null;   // feature 5: raw rows awaiting column mapping
 let pendingColMapSource = null;   // 'neon' | 'givebutter'
 
 // ═══════════════════════════════════════════════════════════════════
+// STEP STATE HELPERS
+// ═══════════════════════════════════════════════════════════════════
+function setStepState(panelId, state) {
+    const el = document.getElementById(panelId);
+    el.classList.remove('state-active', 'state-done', 'state-pending');
+    el.classList.add('state-' + state);
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // STEP 1 — UPLOAD & HANDLE
 // ═══════════════════════════════════════════════════════════════════
 function triggerUpload(source) {
@@ -551,9 +821,10 @@ function handleFile(input, source) {
     mappingTableBuilt = false;
     detectedItemTypes = new Set();
 
-    activateStep('progress-card', 'connector-1');
-    dimStep('mapping-card', 'connector-2');
-    dimStep('export-card',  'connector-3');
+    setStepState('panel-1', 'done');
+    setStepState('panel-2', 'active');
+    setStepState('panel-3', 'pending');
+    setStepState('panel-4', 'pending');
 
     document.getElementById('mapping-pending').style.display  = '';
     document.getElementById('mapping-ready').style.display    = 'none';
@@ -878,7 +1149,8 @@ function continueGiveButterConversion(rows) {
 // STEP 3 — TRANSACTION TYPE MAPPING
 // ═══════════════════════════════════════════════════════════════════
 function showMapping(count, sourceName) {
-    activateStep('mapping-card', 'connector-2');
+    setStepState('panel-2', 'done');
+    setStepState('panel-3', 'active');
     document.getElementById('mapping-pending').style.display = 'none';
     document.getElementById('mapping-ready').style.display   = '';
     // Reset to defaults radio
@@ -960,7 +1232,8 @@ function applyMapping() {
 // STEP 4 — EXPORT
 // ═══════════════════════════════════════════════════════════════════
 function showExport(count, sourceName) {
-    activateStep('export-card', 'connector-3');
+    setStepState('panel-3', 'done');
+    setStepState('panel-4', 'active');
     document.getElementById('export-pending').style.display = 'none';
     document.getElementById('export-ready').style.display   = 'flex';
     document.getElementById('export-summary').textContent   =
@@ -1235,9 +1508,10 @@ function reset() {
     pendingColMapData   = null;
     preflightConfirmed  = false;
 
-    dimStep('progress-card', 'connector-1');
-    dimStep('mapping-card',  'connector-2');
-    dimStep('export-card',   'connector-3');
+    setStepState('panel-1', 'active');
+    setStepState('panel-2', 'pending');
+    setStepState('panel-3', 'pending');
+    setStepState('panel-4', 'pending');
 
     const badge = document.getElementById('source-badge');
     badge.textContent = '—'; badge.className = 'badge neutral';
@@ -1255,19 +1529,6 @@ function reset() {
     if (dr) dr.checked = true;
     document.getElementById('export-pending').style.display   = '';
     document.getElementById('export-ready').style.display     = 'none';
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// STEP STATE HELPERS
-// ═══════════════════════════════════════════════════════════════════
-function activateStep(cardId, connectorId) {
-    document.getElementById(cardId).classList.remove('step-dimmed');
-    if (connectorId) document.getElementById(connectorId).classList.add('lit');
-}
-
-function dimStep(cardId, connectorId) {
-    document.getElementById(cardId).classList.add('step-dimmed');
-    if (connectorId) document.getElementById(connectorId).classList.remove('lit');
 }
 
 // ═══════════════════════════════════════════════════════════════════
