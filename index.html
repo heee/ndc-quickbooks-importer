@@ -249,7 +249,7 @@
         .badge.neon       { background: #e0f0ff; color: #1e5fa8; }
         .badge.givebutter { background: #fff0f5; color: #b5336a; }
         .badge.neutral    { background: var(--border-light); color: var(--text-light); }
-        .log-box { background: var(--green-faint); border: 1px solid var(--border-light); border-radius: 6px; padding: 10px 13px; margin-bottom: 14px; font-size: .81rem; line-height: 1.9; color: var(--text-mid); max-height: 220px; overflow-y: auto; font-variant-numeric: tabular-nums; }
+        .log-box { background: var(--green-faint); border: 1px solid var(--border-light); border-radius: 6px; padding: 10px 13px; margin-bottom: 14px; font-size: .81rem; line-height: 1.9; color: var(--text-mid); font-variant-numeric: tabular-nums; }
         .log-line { display: flex; gap: 8px; align-items: baseline; }
         .log-line::before { content: '›'; color: var(--green-light); font-weight: 900; font-size: .9rem; flex-shrink: 0; }
         .log-line.ok   { color: var(--green-bright); font-weight: 600; }
@@ -265,6 +265,8 @@
         .progress-track { height: 7px; background: var(--border-light); border-radius: 99px; overflow: hidden; margin-bottom: 7px; }
         .progress-fill { height: 100%; background: linear-gradient(90deg, var(--green-mid) 0%, var(--green-accent) 100%); border-radius: 99px; width: 0%; transition: width .45s cubic-bezier(.4,0,.2,1); }
         .progress-pct { font-size: .74rem; color: var(--text-light); text-align: right; }
+        .processing-footer { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-light); display: flex; justify-content: flex-end; animation: fadeUp .3s ease both; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
         /* ── Column-mapping inline ───────────────────────────────── */
         .col-map-section { margin-top: 14px; border: 1.5px solid #f59e0b; border-radius: 8px; overflow: hidden; }
@@ -512,6 +514,14 @@
                     </div>
                     <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
                     <div class="progress-pct" id="progress-pct">0%</div>
+                    <div class="processing-footer" id="processing-footer" style="display:none">
+                        <button class="btn-primary" onclick="proceedToMapping()">
+                            Continue to Transaction Mapping
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                                <path d="M3 7h8M8 4l3 3-3 3" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -828,6 +838,7 @@ function handleFile(input, source) {
     document.getElementById('mapping-ready').style.display    = 'none';
     document.getElementById('export-pending').style.display   = '';
     document.getElementById('export-ready').style.display     = 'none';
+    document.getElementById('processing-footer').style.display = 'none';
     document.getElementById('col-map-section').style.display  = 'none';
 
     clearLog();
@@ -949,7 +960,7 @@ function continueNeonConversion(rows) {
 
     setProgress(100);
     logMsg(`Done — ${convertedData.length} transactions ready for review.`, 'ok');
-    showMapping();
+    processingComplete();
 }
 
 // ── Feature 3 helper ──────────────────────────────────────────────
@@ -1138,18 +1149,21 @@ function continueGiveButterConversion(rows) {
 
     setProgress(100);
     logMsg(`Done — ${convertedData.length} transactions ready for review.`, 'ok');
-    showMapping();
+    processingComplete();
 }
 
 // ═══════════════════════════════════════════════════════════════════
 // STEP 3 — TRANSACTION TYPE MAPPING
 // ═══════════════════════════════════════════════════════════════════
-function showMapping() {
+function processingComplete() {
+    document.getElementById('processing-footer').style.display = '';
+}
+
+function proceedToMapping() {
     setStepState('panel-2', 'done');
     setStepState('panel-3', 'active');
     document.getElementById('mapping-pending').style.display = 'none';
     document.getElementById('mapping-ready').style.display   = '';
-    // Reset to defaults radio
     const defaultsRadio = document.querySelector('input[name="mapping-mode"][value="defaults"]');
     if (defaultsRadio) { defaultsRadio.checked = true; onMappingModeChange('defaults'); }
 }
@@ -1503,6 +1517,7 @@ function reset() {
     document.getElementById('log-box').innerHTML =
         '<div class="log-line" style="color:var(--text-light);font-style:italic">Waiting for a source file…</div>';
     setProgress(0);
+    document.getElementById('processing-footer').style.display = 'none';
     document.getElementById('col-map-section').style.display  = 'none';
     document.getElementById('mapping-pending').style.display  = '';
     document.getElementById('mapping-ready').style.display    = 'none';
